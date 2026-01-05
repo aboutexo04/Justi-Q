@@ -1,0 +1,86 @@
+# =========================
+# OS 관련
+# =========================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+.env
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# =========================
+# IDE / 에디터
+# =========================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# =========================
+# 데이터 (용량 큼)
+# =========================
+data/
+data_sampled/
+
+# =========================
+# 모델 / 벡터 DB
+# =========================
+models/
+*.pt
+*.pth
+*.bin
+*.onnx
+chroma_db/
+faiss_index/
+*.index
+
+# =========================
+# 로그 / 임시 파일
+# =========================
+logs/
+*.log
+tmp/
+temp/
+*.tmp
+
+# =========================
+# 환경 설정
+# =========================
+.env
+.env.local
+*.local
+config.yaml
+secrets.yaml
