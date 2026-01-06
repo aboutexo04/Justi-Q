@@ -29,22 +29,36 @@ def setup_langsmith():
 LANGSMITH_ENABLED = setup_langsmith()
 
 
-def get_api_key() -> str:
-    """API 키 가져오기 (환경변수 또는 Streamlit secrets)"""
-    # 1. 환경변수 확인 (로컬 개발용) - 우선
-    api_key = os.getenv("OPENROUTER_API_KEY")
-    if api_key:
-        return api_key
+def get_llm_config() -> dict:
+    """LLM 설정 가져오기 (OpenRouter, OpenAI, Solar 지원)"""
+    # 1. OpenRouter
+    if os.getenv("OPENROUTER_API_KEY"):
+        return {
+            "provider": "openrouter",
+            "api_key": os.getenv("OPENROUTER_API_KEY"),
+            "base_url": "https://openrouter.ai/api/v1",
+            "model": os.getenv("LLM_MODEL", "meta-llama/llama-3.3-70b-instruct:free")
+        }
 
-    # 2. Streamlit secrets 확인 (Streamlit Cloud 배포용)
-    try:
-        import streamlit as st
-        if hasattr(st, 'secrets') and 'OPENROUTER_API_KEY' in st.secrets:
-            return st.secrets['OPENROUTER_API_KEY']
-    except (ImportError, Exception):
-        pass
+    # 2. OpenAI
+    if os.getenv("OPENAI_API_KEY"):
+        return {
+            "provider": "openai",
+            "api_key": os.getenv("OPENAI_API_KEY"),
+            "base_url": None,
+            "model": os.getenv("LLM_MODEL", "gpt-4o-mini")
+        }
 
-    raise ValueError("OPENROUTER_API_KEY 환경변수를 설정해주세요.")
+    # 3. Solar (Upstage)
+    if os.getenv("SOLAR_API_KEY"):
+        return {
+            "provider": "solar",
+            "api_key": os.getenv("SOLAR_API_KEY"),
+            "base_url": "https://api.upstage.ai/v1/solar",
+            "model": os.getenv("LLM_MODEL", "solar-pro")
+        }
+
+    raise ValueError("LLM API 키를 설정해주세요. (OPENROUTER_API_KEY, OPENAI_API_KEY, 또는 SOLAR_API_KEY)")
 
 
 class RAGChain:
@@ -53,22 +67,23 @@ class RAGChain:
     def __init__(
         self,
         vectorstore: VectorStore,
-        model: str = "meta-llama/llama-3.3-70b-instruct:free",
         temperature: float = 0.7
     ):
         self.vectorstore = vectorstore
-        self.model = model
         self.temperature = temperature
 
-        # LangChain ChatOpenAI (OpenRouter 연결) - 자동 트레이싱 지원
-        api_key = get_api_key()
+        # LLM 설정 가져오기 (OpenRouter, OpenAI, Solar 자동 감지)
+        llm_config = get_llm_config()
+        self.model = llm_config["model"]
+        self.provider = llm_config["provider"]
 
+        # LangChain ChatOpenAI - 자동 트레이싱 지원
         self.llm = ChatOpenAI(
-            model=model,
+            model=self.model,
             temperature=temperature,
             max_tokens=2000,
-            openai_api_key=api_key,
-            openai_api_base="https://openrouter.ai/api/v1"
+            openai_api_key=llm_config["api_key"],
+            openai_api_base=llm_config["base_url"]
         )
 
         self.system_prompt = """당신은 형사법 전문 법률 AI 어시스턴트입니다.

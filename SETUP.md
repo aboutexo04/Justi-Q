@@ -18,8 +18,13 @@ pip install -r requirements.txt
 `.env` 파일을 프로젝트 루트에 생성:
 
 ```bash
-# 필수
-OPENROUTER_API_KEY=your_openrouter_api_key
+# LLM API Key (아래 중 하나만 설정)
+OPENROUTER_API_KEY=your_openrouter_api_key   # 옵션 1
+# OPENAI_API_KEY=your_openai_api_key         # 옵션 2
+# SOLAR_API_KEY=your_solar_api_key           # 옵션 3
+
+# 모델 커스텀 (선택사항)
+# LLM_MODEL=gpt-4o-mini
 
 # 선택 (LangSmith 모니터링)
 LANGCHAIN_API_KEY=your_langsmith_api_key
@@ -27,8 +32,16 @@ LANGCHAIN_PROJECT=justi-q
 ```
 
 ### API 키 발급처
-- **OpenRouter**: https://openrouter.ai (필수)
-- **LangSmith**: https://smith.langchain.com → Settings → API Keys (선택)
+
+**LLM (하나만 선택)**
+| Provider | URL | 기본 모델 | 비고 |
+|----------|-----|-----------|------|
+| OpenRouter | https://openrouter.ai | Llama 3.3 70B | 무료 모델 지원 |
+| OpenAI | https://platform.openai.com | gpt-4o-mini | 유료 |
+| Solar | https://console.upstage.ai | solar-pro | 한국어 특화 |
+
+**모니터링 (선택)**
+- **LangSmith**: https://smith.langchain.com → Settings → API Keys
 
 ## 4. 벡터 DB 설정
 
