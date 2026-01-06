@@ -9,6 +9,7 @@ torch>=2.0.0
 
 # OpenRouter LLM
 openai>=1.0.0
+langchain-openai>=0.0.5
 
 # Data Processing
 pandas>=2.0.0

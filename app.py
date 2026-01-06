@@ -4,10 +4,17 @@ Justi-Q Streamlit 프론트엔드
 """
 
 import sys
+import os
 sys.path.append("src")
 
 from dotenv import load_dotenv
 load_dotenv()
+
+# LangSmith 설정 (Streamlit 임포트 전에 설정)
+if os.getenv("LANGCHAIN_API_KEY"):
+    os.environ["LANGCHAIN_TRACING_V2"] = "true"
+    os.environ["LANGCHAIN_PROJECT"] = "justi-q"
+    os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
 
 import streamlit as st
 from vectorstore import VectorStore

@@ -2,12 +2,15 @@
 RAG 체인
 - OpenRouter를 통한 LLM 연결
 - 검색 + 답변 생성 파이프라인
+- LangSmith 자동 트레이싱
 """
 
 import os
 from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
-from openai import OpenAI
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import SystemMessage, HumanMessage
+from langsmith import traceable
 
 from vectorstore import VectorStore
 
@@ -18,7 +21,8 @@ def setup_langsmith():
     """LangSmith 트레이싱 설정"""
     if os.getenv("LANGCHAIN_API_KEY"):
         os.environ["LANGCHAIN_TRACING_V2"] = "true"
-        os.environ["LANGCHAIN_PROJECT"] = os.getenv("LANGCHAIN_PROJECT", "justi-q")
+        os.environ["LANGCHAIN_PROJECT"] = "justi-q"  # 강제 설정
+        os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
         return True
     return False
 
@@ -44,7 +48,7 @@ def get_api_key() -> str:
 
 
 class RAGChain:
-    """RAG 체인: 검색 + 답변 생성"""
+    """RAG 체인: 검색 + 답변 생성 (LangSmith 자동 트레이싱)"""
 
     def __init__(
         self,
@@ -56,12 +60,15 @@ class RAGChain:
         self.model = model
         self.temperature = temperature
 
-        # OpenRouter 클라이언트 초기화
+        # LangChain ChatOpenAI (OpenRouter 연결) - 자동 트레이싱 지원
         api_key = get_api_key()
 
-        self.client = OpenAI(
-            base_url="https://openrouter.ai/api/v1",
-            api_key=api_key
+        self.llm = ChatOpenAI(
+            model=model,
+            temperature=temperature,
+            max_tokens=2000,
+            openai_api_key=api_key,
+            openai_api_base="https://openrouter.ai/api/v1"
         )
 
         self.system_prompt = """당신은 형사법 전문 법률 AI 어시스턴트입니다.
@@ -90,6 +97,7 @@ class RAGChain:
 
         return "\n---\n".join(context_parts)
 
+    @traceable(name="rag_query")
     def query(
         self,
         question: str,
@@ -114,7 +122,7 @@ class RAGChain:
         # 2. 컨텍스트 구성
         context = self._format_context(search_results)
 
-        # 3. LLM 호출
+        # 3. LLM 호출 (LangChain - 자동 트레이싱)
         user_message = f"""다음은 관련 법률 문서입니다:
 
 {context}
@@ -125,17 +133,13 @@ class RAGChain:
 
 위 문서를 참고하여 답변해주세요."""
 
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[
-                {"role": "system", "content": self.system_prompt},
-                {"role": "user", "content": user_message}
-            ],
-            temperature=self.temperature,
-            max_tokens=2000
-        )
+        messages = [
+            SystemMessage(content=self.system_prompt),
+            HumanMessage(content=user_message)
+        ]
 
-        answer = response.choices[0].message.content
+        response = self.llm.invoke(messages)
+        answer = response.content
 
         # 4. 결과 반환
         sources = [
