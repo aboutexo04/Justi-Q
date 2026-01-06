@@ -6,6 +6,9 @@ Justi-Q Streamlit 프론트엔드
 import sys
 sys.path.append("src")
 
+from dotenv import load_dotenv
+load_dotenv()
+
 import streamlit as st
 from vectorstore import VectorStore
 from rag_chain import RAGChain

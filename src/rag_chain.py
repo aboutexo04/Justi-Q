@@ -15,19 +15,19 @@ load_dotenv()
 
 
 def get_api_key() -> str:
-    """API 키 가져오기 (Streamlit secrets 또는 환경변수)"""
-    # 1. Streamlit secrets 확인 (Streamlit Cloud 배포용)
+    """API 키 가져오기 (환경변수 또는 Streamlit secrets)"""
+    # 1. 환경변수 확인 (로컬 개발용) - 우선
+    api_key = os.getenv("OPENROUTER_API_KEY")
+    if api_key:
+        return api_key
+
+    # 2. Streamlit secrets 확인 (Streamlit Cloud 배포용)
     try:
         import streamlit as st
         if hasattr(st, 'secrets') and 'OPENROUTER_API_KEY' in st.secrets:
             return st.secrets['OPENROUTER_API_KEY']
-    except ImportError:
+    except (ImportError, Exception):
         pass
-
-    # 2. 환경변수 확인 (로컬 개발용)
-    api_key = os.getenv("OPENROUTER_API_KEY")
-    if api_key:
-        return api_key
 
     raise ValueError("OPENROUTER_API_KEY 환경변수를 설정해주세요.")
 
